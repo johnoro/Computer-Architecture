@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "cpu.h"
 
 #define DATA_LEN 6
@@ -67,5 +68,15 @@ void cpu_run(struct cpu *cpu) {
  * Initialize a CPU struct
  */
 void cpu_init(struct cpu *cpu) {
-  // TODO: Initialize the PC and other special registers
+  cpu->pc = 0;
+  cpu->ir = 0;
+  cpu->mar = 0;
+  cpu->mdr = 0;
+  cpu->fl = 0;
+
+  // TODO: Initialize the stack pointer separately,
+  // per https://github.com/johnoro/Computer-Architecture/blob/master/LS8-spec.md#registers
+  // and https://github.com/johnoro/Computer-Architecture/tree/master/ls8#step-3-implement-the-core-of-cpu_init
+  memset(cpu->registers, 0, REGISTERS_LEN);
+  memset(cpu->ram, 0, RAM_LEN);
 }

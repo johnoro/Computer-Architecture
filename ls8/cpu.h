@@ -1,6 +1,9 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
+#define REGISTERS_LEN 8
+#define RAM_LEN 256
+
 typedef unsigned char byte;
 
 // Holds all information about the CPU
@@ -12,8 +15,8 @@ struct cpu {
   byte mdr;
   byte fl;
 
-  byte registers[8];
-  byte ram[256];
+  byte registers[REGISTERS_LEN];
+  byte ram[RAM_LEN];
 };
 
 // ALU operations
