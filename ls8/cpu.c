@@ -19,12 +19,12 @@ void cpu_ram_write(struct cpu *cpu, int index, byte value) {
 void cpu_load(struct cpu *cpu) {
   char data[DATA_LEN] = {
     // From print8.ls8
-    0b10000010, // LDI R0,8
+    LDI, // LDI R0,8
     0b00000000,
     0b00001000,
-    0b01000111, // PRN R0
+    PRN, // PRN R0
     0b00000000,
-    0b00000001  // HLT
+    HLT
   };
 
   int address = 0;
@@ -44,6 +44,10 @@ void cpu_load(struct cpu *cpu) {
 void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
   switch (op) {
     case ALU_MUL:
+      // TODO
+      break;
+
+    case ALU_ADD:
       // TODO
       break;
 
