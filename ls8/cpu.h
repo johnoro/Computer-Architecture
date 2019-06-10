@@ -11,9 +11,9 @@ struct cpu {
   byte mar;
   byte mdr;
   byte fl;
-  
-  byte *registers;
-  byte *ram;
+
+  byte registers[8];
+  byte ram[256];
 };
 
 // ALU operations
