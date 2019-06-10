@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "cpu.h"
 
 #define DATA_LEN 6
@@ -47,20 +49,59 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
   }
 }
 
+int is_bit_set(byte b, int n) {
+  return b & (1 << n);
+}
+
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu) {
-  int running = 1; // True until we get a HLT instruction
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+  byte instruction, operand1, operand2;
+  #pragma GCC diagnostic pop
+  int running = 1, operands;
 
   while (running) {
     // TODO
     // 1. Get the value of the current instruction (in address PC).
+    cpu->ir = cpu->pc++;
+    instruction = cpu_ram_read(cpu, cpu->ir);
+
     // 2. Figure out how many operands this next instruction requires
+    operands = is_bit_set(instruction, 7) ? 2 
+      : is_bit_set(instruction, 6) ? 1 
+      : 0;
+
     // 3. Get the appropriate value(s) of the operands following this instruction
+    if (operands > 0) {
+      operand1 = cpu_ram_read(cpu, cpu->pc++);
+      if (operands > 1)
+        operand2 = cpu_ram_read(cpu, cpu->pc++);
+    }
+
     // 4. switch() over it to decide on a course of action.
+    switch (instruction) {
+      case LDI:
+        break;
+      
+      case PRN:
+        break;
+      
+      case HLT:
+        running = 0;
+        break;
+      
+      default:
+        printf("An instruction occurred that has not yet been implemented.\n");
+        break;
+    }
+
     // 5. Do whatever the instruction should do according to the spec.
+
     // 6. Move the PC to the next instruction.
+
   }
 }
 
