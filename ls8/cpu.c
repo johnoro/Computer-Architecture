@@ -39,6 +39,8 @@ void cpu_load(struct cpu *cpu) {
 /**
  * ALU
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
   switch (op) {
     case ALU_MUL:
@@ -48,6 +50,7 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
     // TODO: implement more ALU ops
   }
 }
+#pragma GCC diagnostic pop
 
 int is_bit_set(byte b, int n) {
   return b & (1 << n);
@@ -57,10 +60,7 @@ int is_bit_set(byte b, int n) {
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu) {
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
   byte instruction, operand1, operand2;
-  #pragma GCC diagnostic pop
   int running = 1, operands;
 
   while (running) {
@@ -84,9 +84,11 @@ void cpu_run(struct cpu *cpu) {
     // 4. switch() over it to decide on a course of action.
     switch (instruction) {
       case LDI:
+        cpu->registers[operand1] = operand2;
         break;
       
       case PRN:
+        printf("%d\n", cpu->registers[operand1]);
         break;
       
       case HLT:
