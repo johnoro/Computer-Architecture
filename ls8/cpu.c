@@ -65,23 +65,22 @@ int is_bit_set(byte b, int n) {
  */
 void cpu_run(struct cpu *cpu) {
   byte instruction, operand1, operand2;
-  int running = 1, operands;
+  int running = 1, num_operands;
 
   while (running) {
-    // TODO
     // 1. Get the value of the current instruction (in address PC).
     cpu->ir = cpu->pc++;
     instruction = cpu_ram_read(cpu, cpu->ir);
 
     // 2. Figure out how many operands this next instruction requires
-    operands = is_bit_set(instruction, 7) ? 2 
+    num_operands = is_bit_set(instruction, 7) ? 2 
       : is_bit_set(instruction, 6) ? 1 
       : 0;
 
     // 3. Get the appropriate value(s) of the operands following this instruction
-    if (operands > 0) {
+    if (num_operands > 0) {
       operand1 = cpu_ram_read(cpu, cpu->pc++);
-      if (operands > 1)
+      if (num_operands > 1)
         operand2 = cpu_ram_read(cpu, cpu->pc++);
     }
 
@@ -98,16 +97,14 @@ void cpu_run(struct cpu *cpu) {
       case HLT:
         running = 0;
         break;
+
+      // TODO:
+      // implement more instructions
       
       default:
         printf("An instruction occurred that has not yet been implemented.\n");
         break;
     }
-
-    // 5. Do whatever the instruction should do according to the spec.
-
-    // 6. Move the PC to the next instruction.
-
   }
 }
 
