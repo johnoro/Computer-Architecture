@@ -44,18 +44,16 @@ void cpu_load(struct cpu *cpu, char *file_name) {
  */
 void cpu_run(struct cpu *cpu) {
   byte instruction, operand1, operand2;
-  int running = 1, num_operands, is_alu_op, does_set_pc;
+  int running = 1, num_operands, is_alu_op;
 
   while (running) {
     // 1. Get the value of the current instruction (in address PC).
-    instruction = cpu_ram_read(cpu, cpu->pc);
+    cpu->ir = cpu->pc++;
+    instruction = cpu_ram_read(cpu, cpu->ir);
 
-    does_set_pc = is_bit_set(instruction, 4);
-    cpu->ir = does_set_pc ? cpu->pc : cpu->pc++;
-    
     // 2. Figure out how many operands this next instruction requires
     num_operands = instruction >> 6;
-
+    
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (num_operands > 0) {
       operand1 = cpu_ram_read(cpu, cpu->pc++);
@@ -91,8 +89,14 @@ void cpu_run(struct cpu *cpu) {
         cpu->registers[operand1] = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
         break;
 
-      // TODO:
-      // implement more instructions
+      case CALL:
+        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->ir+2);
+        cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case RET:
+        cpu->pc = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
+        break;
       
       default:
         printf("An instruction occurred that has not yet been implemented.\n");
