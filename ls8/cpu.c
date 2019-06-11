@@ -7,6 +7,8 @@
 
 #define DATA_MAX RAM_LEN
 
+#define STACK_IND (REGISTERS_LEN-1)
+
 byte cpu_ram_read(struct cpu *cpu, int index) {
   return cpu->ram[index];
 }
@@ -49,8 +51,7 @@ void cpu_run(struct cpu *cpu) {
     instruction = cpu_ram_read(cpu, cpu->pc);
 
     does_set_pc = is_bit_set(instruction, 4);
-    if (!does_set_pc)
-      cpu->ir = cpu->pc++;
+    cpu->ir = does_set_pc ? cpu->pc : cpu->pc++;
     
     // 2. Figure out how many operands this next instruction requires
     num_operands = instruction >> 6;
@@ -68,7 +69,6 @@ void cpu_run(struct cpu *cpu) {
       continue;
     }
 
-
     // 4. switch() over it to decide on a course of action.
     switch (instruction) {
       case LDI:
@@ -81,6 +81,14 @@ void cpu_run(struct cpu *cpu) {
       
       case HLT:
         running = 0;
+        break;
+
+      case PUSH:
+        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->registers[operand1]);
+        break;
+
+      case POP:
+        cpu->registers[operand1] = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
         break;
 
       // TODO:
@@ -103,11 +111,7 @@ void cpu_init(struct cpu *cpu) {
   cpu->mdr = 0;
   cpu->fl = 0;
 
-  // TODO: Initialize the stack pointer separately,
-  // per https://github.com/johnoro/Computer-Architecture/blob/master/LS8-spec.md#registers
-  // and https://github.com/johnoro/Computer-Architecture/tree/master/ls8#step-3-implement-the-core-of-cpu_init
-  int last = REGISTERS_LEN-1;
-  memset(cpu->registers, 0, last);
-  cpu->registers[last] = 0xF4;
+  memset(cpu->registers, 0, STACK_IND);
+  cpu->registers[STACK_IND] = 0xF4;
   memset(cpu->ram, 0, RAM_LEN);
 }
