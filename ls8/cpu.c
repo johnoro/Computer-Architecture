@@ -49,11 +49,11 @@ void cpu_load(struct cpu *cpu, char *file_name) {
 void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
   switch (op) {
     case ALU_MUL:
-      // TODO
+      cpu->registers[regA] *= cpu->registers[regB];
       break;
 
     case ALU_ADD:
-      // TODO
+      cpu->registers[regA] += cpu->registers[regB];
       break;
 
     // TODO: implement more ALU ops
@@ -101,6 +101,14 @@ void cpu_run(struct cpu *cpu) {
       
       case HLT:
         running = 0;
+        break;
+
+      case MUL:
+        alu(cpu, ALU_MUL, operand1, operand2);
+        break;
+      
+      case ADD:
+        alu(cpu, ALU_ADD, operand1, operand2);
         break;
 
       // TODO:
