@@ -12,19 +12,19 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
   switch (op) {
     case ALU_MUL:
       result = cpu->registers[regA] * cpu->registers[regB];
-      cpu->registers[regA] = result & 0xFF;
       break;
 
     case ALU_ADD:
       result = cpu->registers[regA] + cpu->registers[regB];
-      cpu->registers[regA] = result & 0xFF;
       break;
 
     // TODO: implement more ALU ops
     case ALU_NULL:
       printf("An ALU instruction occurred that has not yet been implemented.\n");
-      break;
+      return;
   }
+
+  cpu->registers[regA] = result & 0xFF;
 }
 
 enum alu_op get_op(byte instruction) {
