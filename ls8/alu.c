@@ -8,13 +8,16 @@
  * ALU
  */
 void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
+  byte result;
   switch (op) {
     case ALU_MUL:
-      cpu->registers[regA] *= cpu->registers[regB];
+      result = cpu->registers[regA] * cpu->registers[regB];
+      cpu->registers[regA] = result & 0xFF;
       break;
 
     case ALU_ADD:
-      cpu->registers[regA] += cpu->registers[regB];
+      result = cpu->registers[regA] + cpu->registers[regB];
+      cpu->registers[regA] = result & 0xFF;
       break;
 
     // TODO: implement more ALU ops

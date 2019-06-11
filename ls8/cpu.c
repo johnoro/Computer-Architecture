@@ -106,6 +106,8 @@ void cpu_init(struct cpu *cpu) {
   // TODO: Initialize the stack pointer separately,
   // per https://github.com/johnoro/Computer-Architecture/blob/master/LS8-spec.md#registers
   // and https://github.com/johnoro/Computer-Architecture/tree/master/ls8#step-3-implement-the-core-of-cpu_init
-  memset(cpu->registers, 0, REGISTERS_LEN);
+  int last = REGISTERS_LEN-1;
+  memset(cpu->registers, 0, last);
+  cpu->registers[last] = 0xF4;
   memset(cpu->ram, 0, RAM_LEN);
 }
