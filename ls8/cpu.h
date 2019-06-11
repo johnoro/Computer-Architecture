@@ -1,10 +1,10 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
+#include "byte.h"
+
 #define REGISTERS_LEN 8
 #define RAM_LEN 256
-
-typedef unsigned char byte;
 
 // Holds all information about the CPU
 struct cpu {
@@ -19,15 +19,7 @@ struct cpu {
   byte ram[RAM_LEN];
 };
 
-// ALU operations
-enum alu_op {
-	ALU_MUL,
-  ALU_ADD
-	// Add more here
-};
-
 // Instructions
-
 // These use binary literals. If these aren't available with your compiler, hex
 // literals should be used.
 #define LDI 0b10000010
