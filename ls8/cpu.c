@@ -3,7 +3,7 @@
 #include <string.h>
 #include "cpu.h"
 
-#define DATA_LEN 6
+#define DATA_MAX RAM_LEN
 
 byte cpu_ram_read(struct cpu *cpu, int index) {
   return cpu->ram[index];
@@ -18,22 +18,25 @@ void cpu_ram_write(struct cpu *cpu, int index, byte value) {
  */
 void cpu_load(struct cpu *cpu, char *file_name) {
   FILE *fp = fopen(file_name, "r");
+  char *line = NULL;
+  int address = 0, j = 0, line_len;
+  size_t len = 0;
+  byte data[DATA_MAX];
 
-  char data[DATA_LEN] = {
-    // print8.ls8
-    LDI, // LDI R0,8
-    0,
-    8,
-    PRN, // PRN R0
-    0,
-    HLT
-  };
-
-  int address = 0;
-
-  for (int i = 0; i < DATA_LEN; i++) {
-    cpu->ram[address++] = data[i];
+  while ((line_len = getline(&line, &len, fp)) != -1) {
+    for (int i = 0; i < line_len; i++)
+      if (line[i] == '\n' || line[i] == ' ' || line[i] == '#') {
+        line[i] = '\0';
+        break;
+      }
+    
+    // printf("\n%s\n", line);
+    if (strlen(line) != 0)
+      data[j++] = strtoul(line, NULL, 2);
   }
+
+  for (int i = 0; i < j; i++)
+    cpu->ram[address++] = data[i];
 
   fclose(fp);
 }
