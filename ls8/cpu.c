@@ -44,7 +44,7 @@ void cpu_run(struct cpu *cpu) {
         break;
       
       case LD:
-        cpu->registers[operand1] = cpu->registers[operand2];
+        cpu->registers[operand1] = ram[cpu->registers[operand2]];
         break;
       
       case PRN:

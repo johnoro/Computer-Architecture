@@ -25,7 +25,7 @@ PrintStrLoop:
 	JEQ R3         
 
 	LD R3,R0            ; Load R3 from address in R0
-	PRAR R3              ; Print character
+	PRA R3              ; Print character
 
 	INC R0              ; Increment pointer to next character
 	DEC R1              ; Decrement number of characters
