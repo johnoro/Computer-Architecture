@@ -77,6 +77,10 @@ void cpu_run(struct cpu *cpu) {
         printf("%d\n", cpu->registers[operand1]);
         break;
       
+      case PRA:
+        printf("%c", cpu->registers[operand1]);
+        break;
+      
       case HLT:
         running = 0;
         break;
@@ -98,6 +102,20 @@ void cpu_run(struct cpu *cpu) {
         cpu->pc = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
         break;
       
+      case JMP:
+        cpu->pc = cpu->registers[operand1];
+        break;
+
+      case JLT:
+        if (is_bit_set(cpu->fl, 2))
+          cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case JLE:
+        if (is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
+        break;
+
       default:
         printf("An instruction occurred that has not yet been implemented.\n");
         break;

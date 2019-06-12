@@ -8,7 +8,9 @@
 enum alu_op {
   ALU_NULL,
 	ALU_MUL,
-  ALU_ADD
+  ALU_ADD,
+  ALU_INC,
+  ALU_CMP
 	// Add more here
 };
 

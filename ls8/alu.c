@@ -18,7 +18,21 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
       result = cpu->registers[regA] + cpu->registers[regB];
       break;
 
-    // TODO: implement more ALU ops
+    case ALU_INC:
+      result = cpu->registers[regA] + 1;
+      break;
+    
+    case ALU_CMP:
+      if (cpu->registers[regA] == cpu->registers[regB])
+        cpu->fl = 0b00000001;
+      else {
+        if (cpu->registers[regA] > cpu->registers[regB]) 
+          cpu->fl = 0b00000010;
+        else
+          cpu->fl = 0b00000100;
+      }
+      return;
+
     case ALU_NULL:
       printf("An ALU instruction occurred that has not yet been implemented.\n");
       return;
@@ -33,6 +47,10 @@ enum alu_op get_op(byte instruction) {
       return ALU_MUL;
     case ADD:
       return ALU_ADD;
+    case INC:
+      return ALU_INC;
+    case CMP:
+      return ALU_CMP;
     default:
       return ALU_NULL;
   }
