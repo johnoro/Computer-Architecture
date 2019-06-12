@@ -4,7 +4,6 @@
 #include "byte.h"
 
 #define REGISTERS_LEN 8
-#define RAM_LEN 256
 
 // Holds all information about the CPU
 struct cpu {
@@ -16,7 +15,6 @@ struct cpu {
   byte fl;
 
   byte registers[REGISTERS_LEN];
-  byte ram[RAM_LEN];
 };
 
 // Instructions
@@ -40,7 +38,6 @@ struct cpu {
 // TODO: more instructions here. These can be used in cpu_run().
 
 // Function declarations
-extern void cpu_load(struct cpu *cpu, char *file_name);
 extern void cpu_init(struct cpu *cpu);
 extern void cpu_run(struct cpu *cpu);
 

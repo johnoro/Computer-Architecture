@@ -1,43 +1,11 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "cpu.h"
 #include "alu.h"
+#include "ram.h"
 #include "byte.h"
 
-#define DATA_MAX RAM_LEN
-
 #define STACK_IND (REGISTERS_LEN-1)
-
-byte cpu_ram_read(struct cpu *cpu, int index) {
-  return cpu->ram[index];
-}
-
-void cpu_ram_write(struct cpu *cpu, int index, byte value) {
-  cpu->ram[index] = value;
-}
-
-/**
- * Load the binary bytes from a .ls8 source file into a RAM array
- */
-void cpu_load(struct cpu *cpu, char *file_name) {
-  FILE *fp = fopen(file_name, "r");
-  char *line = NULL, *end;
-  int data_len = 0, line_len;
-  size_t len = 0;
-  byte data[DATA_MAX], bits;
-
-  while ((line_len = getline(&line, &len, fp)) != -1) {
-    bits = strtoul(line, &end, 2);
-    
-    if (end != line)
-      data[data_len++] = bits;
-  }
-
-  memcpy(cpu->ram, data, data_len);
-
-  fclose(fp);
-}
 
 /**
  * Run the CPU
@@ -49,16 +17,16 @@ void cpu_run(struct cpu *cpu) {
   while (running) {
     // 1. Get the value of the current instruction (in address PC).
     cpu->ir = cpu->pc++;
-    instruction = cpu_ram_read(cpu, cpu->ir);
+    instruction = ram_read(cpu->ir);
 
     // 2. Figure out how many operands this next instruction requires
     num_operands = instruction >> 6;
     
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (num_operands > 0) {
-      operand1 = cpu_ram_read(cpu, cpu->pc++);
+      operand1 = ram_read(cpu->pc++);
       if (num_operands > 1)
-        operand2 = cpu_ram_read(cpu, cpu->pc++);
+        operand2 = ram_read(cpu->pc++);
     }
     
     is_alu_op = is_bit_set(instruction, 5);
@@ -86,20 +54,20 @@ void cpu_run(struct cpu *cpu) {
         break;
 
       case PUSH:
-        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->registers[operand1]);
+        ram_write(--cpu->registers[STACK_IND], cpu->registers[operand1]);
         break;
 
       case POP:
-        cpu->registers[operand1] = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
+        cpu->registers[operand1] = ram_read(cpu->registers[STACK_IND]++);
         break;
 
       case CALL:
-        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->ir+2);
+        ram_write(--cpu->registers[STACK_IND], cpu->pc);
         cpu->pc = cpu->registers[operand1];
         break;
       
       case RET:
-        cpu->pc = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
+        cpu->pc = ram_read(cpu->registers[STACK_IND]++);
         break;
       
       case JMP:
@@ -124,7 +92,7 @@ void cpu_run(struct cpu *cpu) {
 }
 
 /**
- * Initialize a CPU struct
+ * Initialize a CPU struct and RAM
  */
 void cpu_init(struct cpu *cpu) {
   cpu->pc = 0;
@@ -134,6 +102,6 @@ void cpu_init(struct cpu *cpu) {
   cpu->fl = 0;
 
   memset(cpu->registers, 0, STACK_IND);
-  cpu->registers[STACK_IND] = 0xF4;
-  memset(cpu->ram, 0, RAM_LEN);
+  cpu->registers[STACK_IND] = DATA_MAX;
+  ram_init();
 }
