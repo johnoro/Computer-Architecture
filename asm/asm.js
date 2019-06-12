@@ -76,7 +76,6 @@ const ops = {
   "OR":   { type: 2, code: '10101010' },
   "POP":  { type: 1, code: '01000110' },
   "PRA":  { type: 1, code: '01001000' },
-  "PRAR": { type: 1, code: '01001001' },
   "PRN":  { type: 1, code: '01000111' },
   "PUSH": { type: 1, code: '01000101' },
   "RET":  { type: 0, code: '00010001' },

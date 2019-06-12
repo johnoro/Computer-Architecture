@@ -47,6 +47,18 @@ void cpu_run(struct cpu *cpu) {
         cpu->registers[operand1] = ram[cpu->registers[operand2]];
         break;
       
+      case ST:
+        ram[cpu->registers[operand1]] = cpu->registers[operand2];
+        break;
+      
+      // TODO
+
+      // case INT:
+      //   break;
+      
+      // case IRET:
+      //   break;
+      
       case PRN:
         printf("%d\n", cpu->registers[operand1]);
         break;
@@ -61,6 +73,9 @@ void cpu_run(struct cpu *cpu) {
       
       case HLT:
         running = 0;
+        break;
+      
+      case NOP:
         break;
 
       case PUSH:
