@@ -22,6 +22,10 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
       result = cpu->registers[regA] + 1;
       break;
     
+    case ALU_DEC:
+      result = cpu->registers[regA] - 1;
+      break;
+    
     case ALU_CMP:
       if (cpu->registers[regA] == cpu->registers[regB])
         cpu->fl = 0b00000001;
@@ -49,6 +53,8 @@ enum alu_op get_op(byte instruction) {
       return ALU_ADD;
     case INC:
       return ALU_INC;
+    case DEC:
+      return ALU_DEC;
     case CMP:
       return ALU_CMP;
     default:

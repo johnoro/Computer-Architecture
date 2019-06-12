@@ -5,7 +5,7 @@
 #include "ram.h"
 #include "byte.h"
 
-#define STACK_IND (REGISTERS_LEN-1)
+#define STACK_PTR (REGISTERS_LEN-1)
 
 /**
  * Run the CPU
@@ -35,10 +35,16 @@ void cpu_run(struct cpu *cpu) {
       continue;
     }
 
+    // printf("\nTRACE: %02X: %02X\n", cpu->pc, cpu->ir);
+
     // 4. switch() over it to decide on a course of action.
     switch (instruction) {
       case LDI:
         cpu->registers[operand1] = operand2;
+        break;
+      
+      case LD:
+        cpu->registers[operand1] = cpu->registers[operand2];
         break;
       
       case PRN:
@@ -48,26 +54,30 @@ void cpu_run(struct cpu *cpu) {
       case PRA:
         printf("%c", cpu->registers[operand1]);
         break;
+
+      case PRAR:
+        printf("%c", ram_read(cpu->registers[operand1]));
+        break;
       
       case HLT:
         running = 0;
         break;
 
       case PUSH:
-        ram_write(--cpu->registers[STACK_IND], cpu->registers[operand1]);
+        ram_write(--cpu->registers[STACK_PTR], cpu->registers[operand1]);
         break;
 
       case POP:
-        cpu->registers[operand1] = ram_read(cpu->registers[STACK_IND]++);
+        cpu->registers[operand1] = ram_read(cpu->registers[STACK_PTR]++);
         break;
 
       case CALL:
-        ram_write(--cpu->registers[STACK_IND], cpu->pc);
+        ram_write(--cpu->registers[STACK_PTR], cpu->pc);
         cpu->pc = cpu->registers[operand1];
         break;
       
       case RET:
-        cpu->pc = ram_read(cpu->registers[STACK_IND]++);
+        cpu->pc = ram_read(cpu->registers[STACK_PTR]++);
         break;
       
       case JMP:
@@ -81,6 +91,26 @@ void cpu_run(struct cpu *cpu) {
       
       case JLE:
         if (is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case JEQ:
+        if (is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case JNE:
+        if (!is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case JGE:
+        if (is_bit_set(cpu->fl, 1) || is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
+        break;
+      
+      case JGT:
+        if (is_bit_set(cpu->fl, 1))
           cpu->pc = cpu->registers[operand1];
         break;
 
@@ -101,7 +131,7 @@ void cpu_init(struct cpu *cpu) {
   cpu->mdr = 0;
   cpu->fl = 0;
 
-  memset(cpu->registers, 0, STACK_IND);
-  cpu->registers[STACK_IND] = DATA_MAX;
+  memset(cpu->registers, 0, STACK_PTR);
+  cpu->registers[STACK_PTR] = DATA_MAX;
   ram_init();
 }
