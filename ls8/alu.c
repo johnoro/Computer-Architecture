@@ -75,7 +75,7 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
 
     case ALU_NULL:
     default:
-      printf("An ALU instruction occurred that has not yet been implemented.\n");
+      printf("\nAn ALU instruction occurred that has not yet been implemented.\n");
       return;
   }
 

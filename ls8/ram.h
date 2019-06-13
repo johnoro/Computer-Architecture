@@ -5,8 +5,7 @@
 
 #define RAM_LEN 256
 #define DATA_MAX 0xF4
-
-byte ram[RAM_LEN];
+#define IV_TABLE 0xF8
 
 byte ram_read(int index);
 void ram_write(int index, byte value);

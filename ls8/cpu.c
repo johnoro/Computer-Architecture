@@ -1,20 +1,59 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "cpu.h"
 #include "alu.h"
 #include "ram.h"
 #include "byte.h"
 
-#define STACK_PTR (REGISTERS_LEN-1)
+/* Helpers */
+void push(struct cpu *cpu, byte value) {
+  ram_write(--cpu->registers[SP], value);
+}
+
+byte pop(struct cpu *cpu) {
+  return ram_read(cpu->registers[SP]++);
+}
 
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu) {
-  byte instruction, operand1, operand2;
-  int running = 1, num_operands, is_alu_op;
+  byte instruction, operand1, operand2, interrupts;
+  int running = 1, num_operands, is_alu_op, is_interrupt;
+  clock_t start = clock(), end;
+  double cpu_time_used;
 
   while (running) {
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    if (cpu_time_used >= 1) {
+      cpu->registers[IS] |= 1;
+      start = clock();
+    }
+
+    interrupts = cpu->registers[IS] & cpu->registers[IM];
+    for (int i = 0; i < 8; i++) {
+      is_interrupt = is_bit_set(interrupts, i);
+
+      if (is_interrupt) {
+        cpu->registers[IM] = 0;
+
+        cpu->registers[IS] ^= 1 << i;
+        push(cpu, cpu->pc);
+        push(cpu, cpu->fl);
+        for (int j = 0; j < 7; j++)
+          push(cpu, cpu->registers[j]);
+        cpu->pc = ram_read(IV_TABLE + i);
+
+        break;
+      }
+    }
+    if (is_interrupt) {
+      is_interrupt = 0;
+      continue;
+    }
+
     // 1. Get the value of the current instruction (in address PC).
     cpu->ir = cpu->pc++;
     instruction = ram_read(cpu->ir);
@@ -44,20 +83,24 @@ void cpu_run(struct cpu *cpu) {
         break;
       
       case LD:
-        cpu->registers[operand1] = ram[cpu->registers[operand2]];
+        cpu->registers[operand1] = ram_read(cpu->registers[operand2]);
         break;
       
       case ST:
-        ram[cpu->registers[operand1]] = cpu->registers[operand2];
+        ram_write(cpu->registers[operand1], cpu->registers[operand2]);
         break;
       
-      // TODO
-
-      // case INT:
-      //   break;
+      case INT:
+        cpu->registers[IS] |= 1 << cpu->registers[operand1];
+        break;
       
-      // case IRET:
-      //   break;
+      case IRET:
+        for (int i = 6; i >= 0; i--)
+          cpu->registers[i] = pop(cpu);
+        cpu->fl = pop(cpu);
+        cpu->pc = pop(cpu);
+        cpu->registers[IM] = 255;
+        break;
       
       case PRN:
         printf("%d\n", cpu->registers[operand1]);
@@ -65,6 +108,7 @@ void cpu_run(struct cpu *cpu) {
       
       case PRA:
         printf("%c", cpu->registers[operand1]);
+        fflush(stdout);
         break;
 
       case PRAR:
@@ -79,20 +123,20 @@ void cpu_run(struct cpu *cpu) {
         break;
 
       case PUSH:
-        ram_write(--cpu->registers[STACK_PTR], cpu->registers[operand1]);
+        push(cpu, cpu->registers[operand1]);
         break;
 
       case POP:
-        cpu->registers[operand1] = ram_read(cpu->registers[STACK_PTR]++);
+        cpu->registers[operand1] = pop(cpu);
         break;
 
       case CALL:
-        ram_write(--cpu->registers[STACK_PTR], cpu->pc);
+        push(cpu, cpu->pc);
         cpu->pc = cpu->registers[operand1];
         break;
       
       case RET:
-        cpu->pc = ram_read(cpu->registers[STACK_PTR]++);
+        cpu->pc = pop(cpu);
         break;
       
       case JMP:
@@ -130,7 +174,7 @@ void cpu_run(struct cpu *cpu) {
         break;
 
       default:
-        printf("An instruction occurred that has not yet been implemented.\n");
+        printf("\nAn instruction occurred that has not yet been implemented.\n");
         break;
     }
   }
@@ -146,7 +190,7 @@ void cpu_init(struct cpu *cpu) {
   cpu->mdr = 0;
   cpu->fl = 0;
 
-  memset(cpu->registers, 0, STACK_PTR);
-  cpu->registers[STACK_PTR] = DATA_MAX;
+  memset(cpu->registers, 0, SP);
+  cpu->registers[SP] = DATA_MAX;
   ram_init();
 }

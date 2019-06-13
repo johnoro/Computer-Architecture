@@ -21,7 +21,6 @@ enum alu_op {
   ALU_SHL,
   ALU_SHR,
   ALU_CMP
-	// Add more here
 };
 
 enum alu_op get_op(byte instruction);

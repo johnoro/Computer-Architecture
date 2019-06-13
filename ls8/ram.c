@@ -3,6 +3,8 @@
 #include <string.h>
 #include "ram.h"
 
+byte ram[RAM_LEN];
+
 byte ram_read(int index) {
   return ram[index];
 }

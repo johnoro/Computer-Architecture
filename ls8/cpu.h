@@ -4,6 +4,9 @@
 #include "byte.h"
 
 #define REGISTERS_LEN 8
+#define SP (REGISTERS_LEN-1)
+#define IS (REGISTERS_LEN-2)
+#define IM (REGISTERS_LEN-3)
 
 // Holds all information about the CPU
 struct cpu {
