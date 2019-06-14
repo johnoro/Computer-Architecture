@@ -193,6 +193,20 @@ Machine code:
 A0 0a 0b
 ```
 
+### ADDI
+
+*This is an instruction handled by the ALU.*
+
+`ADDI registerA immediate`
+
+Add the value of a register to an integer and store it in the register.
+
+Machine code:
+```
+10100101 00000rrr iiiiiiii
+A5 0r ii
+```
+
 ### AND
 
 *This is an instruction handled by the ALU.*

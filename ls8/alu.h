@@ -8,6 +8,7 @@
 enum alu_op {
   ALU_NULL,
   ALU_ADD,
+  ALU_ADDI,
   ALU_SUB,
   ALU_INC,
   ALU_DEC,
@@ -25,8 +26,8 @@ enum alu_op {
 
 enum alu_op get_op(byte instruction);
 
-void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB);
+void alu(struct cpu *cpu, enum alu_op op, byte opA, byte opB);
 
-void handle_alu_op(struct cpu *cpu, byte instruction, byte regA, byte regB);
+void handle_alu_op(struct cpu *cpu, byte instruction, byte opA, byte opB);
 
 #endif

@@ -46,6 +46,7 @@ struct cpu {
 // ALU
 #define CMP 0b10100111
 #define ADD 0b10100000
+#define ADDI 0b10100101
 #define SUB 0b10100001
 #define INC 0b01100101
 #define DEC 0b01100110

@@ -7,14 +7,14 @@
 /**
  * ALU
  */
-void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
+void alu(struct cpu *cpu, enum alu_op op, byte opA, byte opB) {
   short int result;
   switch (op) {
     case ALU_CMP:
-      if (cpu->registers[regA] == cpu->registers[regB])
+      if (cpu->registers[opA] == cpu->registers[opB])
         cpu->fl = 0b00000001;
       else {
-        if (cpu->registers[regA] > cpu->registers[regB]) 
+        if (cpu->registers[opA] > cpu->registers[opB]) 
           cpu->fl = 0b00000010;
         else
           cpu->fl = 0b00000100;
@@ -22,55 +22,59 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
       return;
     
     case ALU_ADD:
-      result = cpu->registers[regA] + cpu->registers[regB];
+      result = cpu->registers[opA] + cpu->registers[opB];
+      break;
+    
+    case ALU_ADDI:
+      result = cpu->registers[opA] + opB;
       break;
 
     case ALU_SUB:
-      result = cpu->registers[regA] - cpu->registers[regB];
+      result = cpu->registers[opA] - cpu->registers[opB];
       break;
 
     case ALU_INC:
-      result = cpu->registers[regA] + 1;
+      result = cpu->registers[opA] + 1;
       break;
     
     case ALU_DEC:
-      result = cpu->registers[regA] - 1;
+      result = cpu->registers[opA] - 1;
       break;
     
     case ALU_MUL:
-      result = cpu->registers[regA] * cpu->registers[regB];
+      result = cpu->registers[opA] * cpu->registers[opB];
       break;
     
     case ALU_DIV:
-      result = cpu->registers[regA] / cpu->registers[regB];
+      result = cpu->registers[opA] / cpu->registers[opB];
       break;
     
     case ALU_MOD:
-      result = cpu->registers[regA] % cpu->registers[regB];
+      result = cpu->registers[opA] % cpu->registers[opB];
       break;
     
     case ALU_NOT:
-      result = ~cpu->registers[regA];
+      result = ~cpu->registers[opA];
       break;
     
     case ALU_AND:
-      result = cpu->registers[regA] & cpu->registers[regB];
+      result = cpu->registers[opA] & cpu->registers[opB];
       break;
     
     case ALU_OR:
-      result = cpu->registers[regA] | cpu->registers[regB];
+      result = cpu->registers[opA] | cpu->registers[opB];
       break;
     
     case ALU_XOR:
-      result = cpu->registers[regA] ^ cpu->registers[regB];
+      result = cpu->registers[opA] ^ cpu->registers[opB];
       break;
     
     case ALU_SHL:
-      result = cpu->registers[regA] << cpu->registers[regB];
+      result = cpu->registers[opA] << cpu->registers[opB];
       break;
     
     case ALU_SHR:
-      result = cpu->registers[regA] >> cpu->registers[regB];
+      result = cpu->registers[opA] >> cpu->registers[opB];
       break;
 
     case ALU_NULL:
@@ -79,7 +83,7 @@ void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
       return;
   }
 
-  cpu->registers[regA] = result & 0xFF;
+  cpu->registers[opA] = result & 0xFF;
 }
 
 enum alu_op get_op(byte instruction) {
@@ -88,6 +92,8 @@ enum alu_op get_op(byte instruction) {
       return ALU_CMP;
     case ADD:
       return ALU_ADD;
+    case ADDI:
+      return ALU_ADDI;
     case SUB:
       return ALU_SUB;
     case INC:
@@ -117,7 +123,7 @@ enum alu_op get_op(byte instruction) {
   }
 }
 
-void handle_alu_op(struct cpu *cpu, byte instruction, byte regA, byte regB) {
+void handle_alu_op(struct cpu *cpu, byte instruction, byte opA, byte opB) {
   enum alu_op op = get_op(instruction);
-  alu(cpu, op, regA, regB);
+  alu(cpu, op, opA, opB);
 };
