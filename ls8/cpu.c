@@ -105,7 +105,7 @@ void cpu_run(struct cpu *cpu) {
 
       case CALL:
         push(cpu, cpu->pc);
-        jmp_if(cpu, operand1, 1);
+        jmp(cpu, operand1);
         break;
       
       case RET:
@@ -113,7 +113,7 @@ void cpu_run(struct cpu *cpu) {
         break;
       
       case JMP:
-        jmp_if(cpu, operand1, 1);
+        jmp(cpu, operand1);
         break;
 
       case JLT:

@@ -11,7 +11,11 @@ byte pop(struct cpu *cpu) {
   return ram_read(cpu->registers[SP]++);
 }
 
+void jmp(struct cpu *cpu, byte addr) {
+  cpu->pc = cpu->registers[addr];
+}
+
 void jmp_if(struct cpu *cpu, byte addr, int cond) {
   if (cond)
-    cpu->pc = cpu->registers[addr];
+    jmp(cpu, addr);
 }
