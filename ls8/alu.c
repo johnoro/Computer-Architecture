@@ -8,7 +8,7 @@
  * ALU
  */
 void alu(struct cpu *cpu, enum alu_op op, byte regA, byte regB) {
-  byte result;
+  short int result;
   switch (op) {
     case ALU_CMP:
       if (cpu->registers[regA] == cpu->registers[regB])
