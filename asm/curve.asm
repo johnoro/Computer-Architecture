@@ -5,18 +5,16 @@
     LDI R3, PrintAsterisk
     LDI R4, Loop
 
-    LDI R0, FirstLoop
-    CALL R0
+    CALL R4
 
     HLT
 
 Loop:
-    LDI R0, 10 ; newline's ASCII value
-    PRA R0
-FirstLoop:
     LDI R0, 64 ; end of loop
     CMP R1, R0
     ADD R1, R1
+    LDI R0, 10 ; newline's ASCII value
+    PRA R0
     LDI R0, 42 ; * in ASCII
     JLE R3
     RET
