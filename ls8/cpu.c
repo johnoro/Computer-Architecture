@@ -1,75 +1,64 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include "cpu.h"
 #include "alu.h"
-#include "ram.h"
 #include "byte.h"
 
-/* Helpers */
-void push(struct cpu *cpu, byte value) {
-  ram_write(--cpu->registers[SP], value);
+#define DATA_MAX RAM_LEN
+
+#define STACK_IND (REGISTERS_LEN-1)
+
+byte cpu_ram_read(struct cpu *cpu, int index) {
+  return cpu->ram[index];
 }
 
-byte pop(struct cpu *cpu) {
-  return ram_read(cpu->registers[SP]++);
+void cpu_ram_write(struct cpu *cpu, int index, byte value) {
+  cpu->ram[index] = value;
 }
 
-void jmp_if(struct cpu *cpu, byte addr, int cond) {
-  if (cond)
-    cpu->pc = cpu->registers[addr];
+/**
+ * Load the binary bytes from a .ls8 source file into a RAM array
+ */
+void cpu_load(struct cpu *cpu, char *file_name) {
+  FILE *fp = fopen(file_name, "r");
+  char *line = NULL, *end;
+  int data_len = 0, line_len;
+  size_t len = 0;
+  byte data[DATA_MAX], bits;
+
+  while ((line_len = getline(&line, &len, fp)) != -1) {
+    bits = strtoul(line, &end, 2);
+    
+    if (end != line)
+      data[data_len++] = bits;
+  }
+
+  memcpy(cpu->ram, data, data_len);
+
+  fclose(fp);
 }
 
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu) {
-  byte instruction, operand1, operand2, interrupts;
-  int running = 1, num_operands, is_alu_op, is_interrupt;
-  clock_t start = clock(), end;
-  double cpu_time_used;
+  byte instruction, operand1, operand2;
+  int running = 1, num_operands, is_alu_op;
 
   while (running) {
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    if (cpu_time_used >= 1) {
-      cpu->registers[IS] |= 1;
-      start = clock();
-    }
-
-    interrupts = cpu->registers[IS] & cpu->registers[IM];
-    for (int i = 0; i < 8; i++) {
-      is_interrupt = is_bit_set(interrupts, i);
-      if (is_interrupt) {
-        cpu->registers[IM] = 0;
-
-        cpu->registers[IS] ^= 1 << i;
-        push(cpu, cpu->pc);
-        push(cpu, cpu->fl);
-        for (int j = 0; j < 7; j++)
-          push(cpu, cpu->registers[j]);
-        cpu->pc = ram_read(IV_TABLE + i);
-
-        break;
-      }
-    }
-    if (is_interrupt) {
-      is_interrupt = 0;
-      continue;
-    }
-
     // 1. Get the value of the current instruction (in address PC).
     cpu->ir = cpu->pc++;
-    instruction = ram_read(cpu->ir);
+    instruction = cpu_ram_read(cpu, cpu->ir);
 
     // 2. Figure out how many operands this next instruction requires
     num_operands = instruction >> 6;
     
     // 3. Get the appropriate value(s) of the operands following this instruction
     if (num_operands > 0) {
-      operand1 = ram_read(cpu->pc++);
+      operand1 = cpu_ram_read(cpu, cpu->pc++);
       if (num_operands > 1)
-        operand2 = ram_read(cpu->pc++);
+        operand2 = cpu_ram_read(cpu, cpu->pc++);
     }
     
     is_alu_op = is_bit_set(instruction, 5);
@@ -78,32 +67,10 @@ void cpu_run(struct cpu *cpu) {
       continue;
     }
 
-    // printf("\nTRACE: %02X: %02X\n", cpu->pc, cpu->ir);
-
     // 4. switch() over it to decide on a course of action.
     switch (instruction) {
       case LDI:
         cpu->registers[operand1] = operand2;
-        break;
-      
-      case LD:
-        cpu->registers[operand1] = ram_read(cpu->registers[operand2]);
-        break;
-      
-      case ST:
-        ram_write(cpu->registers[operand1], cpu->registers[operand2]);
-        break;
-      
-      case INT:
-        cpu->registers[IS] |= 1 << cpu->registers[operand1];
-        break;
-      
-      case IRET:
-        for (int i = 6; i >= 0; i--)
-          cpu->registers[i] = pop(cpu);
-        cpu->fl = pop(cpu);
-        cpu->pc = pop(cpu);
-        cpu->registers[IM] = 255;
         break;
       
       case PRN:
@@ -112,70 +79,52 @@ void cpu_run(struct cpu *cpu) {
       
       case PRA:
         printf("%c", cpu->registers[operand1]);
-        fflush(stdout);
         break;
       
       case HLT:
         running = 0;
         break;
-      
-      case NOP:
-        break;
 
       case PUSH:
-        push(cpu, cpu->registers[operand1]);
+        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->registers[operand1]);
         break;
 
       case POP:
-        cpu->registers[operand1] = pop(cpu);
+        cpu->registers[operand1] = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
         break;
 
       case CALL:
-        push(cpu, cpu->pc);
-        jmp_if(cpu, operand1, 1);
+        cpu_ram_write(cpu, --cpu->registers[STACK_IND], cpu->ir+2);
+        cpu->pc = cpu->registers[operand1];
         break;
       
       case RET:
-        cpu->pc = pop(cpu);
+        cpu->pc = cpu_ram_read(cpu, cpu->registers[STACK_IND]++);
         break;
       
       case JMP:
-        jmp_if(cpu, operand1, 1);
+        cpu->pc = cpu->registers[operand1];
         break;
 
       case JLT:
-        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 2));
+        if (is_bit_set(cpu->fl, 2))
+          cpu->pc = cpu->registers[operand1];
         break;
       
       case JLE:
-        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0));
-        break;
-      
-      case JEQ:
-        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 0));
-        break;
-      
-      case JNE:
-        jmp_if(cpu, operand1, !is_bit_set(cpu->fl, 0));
-        break;
-      
-      case JGE:
-        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 1) || is_bit_set(cpu->fl, 0));
-        break;
-      
-      case JGT:
-        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 1));
+        if (is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0))
+          cpu->pc = cpu->registers[operand1];
         break;
 
       default:
-        printf("\nAn instruction occurred that has not yet been implemented.\n");
+        printf("An instruction occurred that has not yet been implemented.\n");
         break;
     }
   }
 }
 
 /**
- * Initialize a CPU struct and RAM
+ * Initialize a CPU struct
  */
 void cpu_init(struct cpu *cpu) {
   cpu->pc = 0;
@@ -184,7 +133,7 @@ void cpu_init(struct cpu *cpu) {
   cpu->mdr = 0;
   cpu->fl = 0;
 
-  memset(cpu->registers, 0, SP);
-  cpu->registers[SP] = DATA_MAX;
-  ram_init();
+  memset(cpu->registers, 0, STACK_IND);
+  cpu->registers[STACK_IND] = 0xF4;
+  memset(cpu->ram, 0, RAM_LEN);
 }
