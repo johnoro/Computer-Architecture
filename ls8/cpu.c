@@ -15,6 +15,11 @@ byte pop(struct cpu *cpu) {
   return ram_read(cpu->registers[SP]++);
 }
 
+void jmp_if(struct cpu *cpu, byte addr, int cond) {
+  if (cond)
+    cpu->pc = cpu->registers[addr];
+}
+
 /**
  * Run the CPU
  */
@@ -35,7 +40,6 @@ void cpu_run(struct cpu *cpu) {
     interrupts = cpu->registers[IS] & cpu->registers[IM];
     for (int i = 0; i < 8; i++) {
       is_interrupt = is_bit_set(interrupts, i);
-
       if (is_interrupt) {
         cpu->registers[IM] = 0;
 
@@ -110,10 +114,6 @@ void cpu_run(struct cpu *cpu) {
         printf("%c", cpu->registers[operand1]);
         fflush(stdout);
         break;
-
-      case PRAR:
-        printf("%c", ram_read(cpu->registers[operand1]));
-        break;
       
       case HLT:
         running = 0;
@@ -132,7 +132,7 @@ void cpu_run(struct cpu *cpu) {
 
       case CALL:
         push(cpu, cpu->pc);
-        cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, 1);
         break;
       
       case RET:
@@ -140,37 +140,31 @@ void cpu_run(struct cpu *cpu) {
         break;
       
       case JMP:
-        cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, 1);
         break;
 
       case JLT:
-        if (is_bit_set(cpu->fl, 2))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 2));
         break;
       
       case JLE:
-        if (is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 2) || is_bit_set(cpu->fl, 0));
         break;
       
       case JEQ:
-        if (is_bit_set(cpu->fl, 0))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 0));
         break;
       
       case JNE:
-        if (!is_bit_set(cpu->fl, 0))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, !is_bit_set(cpu->fl, 0));
         break;
       
       case JGE:
-        if (is_bit_set(cpu->fl, 1) || is_bit_set(cpu->fl, 0))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 1) || is_bit_set(cpu->fl, 0));
         break;
       
       case JGT:
-        if (is_bit_set(cpu->fl, 1))
-          cpu->pc = cpu->registers[operand1];
+        jmp_if(cpu, operand1, is_bit_set(cpu->fl, 1));
         break;
 
       default:

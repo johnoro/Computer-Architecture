@@ -29,7 +29,6 @@ struct cpu {
 #define IRET 0b00010011
 #define PRN 0b01000111
 #define PRA 0b01001000
-#define PRAR 0b01001001
 #define HLT 0b00000001
 #define NOP 0b00000000
 #define PUSH 0b01000101
