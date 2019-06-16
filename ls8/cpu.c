@@ -5,54 +5,27 @@
 #include "alu.h"
 #include "ram.h"
 #include "byte.h"
-
-/* Helpers */
-void push(struct cpu *cpu, byte value) {
-  ram_write(--cpu->registers[SP], value);
-}
-
-byte pop(struct cpu *cpu) {
-  return ram_read(cpu->registers[SP]++);
-}
-
-void jmp_if(struct cpu *cpu, byte addr, int cond) {
-  if (cond)
-    cpu->pc = cpu->registers[addr];
-}
+#include "interrupt.h"
+#include "cpu_helpers.h"
 
 /**
  * Run the CPU
  */
 void cpu_run(struct cpu *cpu) {
-  byte instruction, operand1, operand2, interrupts;
+  byte instruction, operand1, operand2;
   int running = 1, num_operands, is_alu_op, is_interrupt;
   clock_t start = clock(), end;
   double cpu_time_used;
 
   while (running) {
     end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used = ((double) end - start) / CLOCKS_PER_SEC;
     if (cpu_time_used >= 1) {
       cpu->registers[IS] |= 1;
       start = clock();
     }
 
-    interrupts = cpu->registers[IS] & cpu->registers[IM];
-    for (int i = 0; i < 8; i++) {
-      is_interrupt = is_bit_set(interrupts, i);
-      if (is_interrupt) {
-        cpu->registers[IM] = 0;
-
-        cpu->registers[IS] ^= 1 << i;
-        push(cpu, cpu->pc);
-        push(cpu, cpu->fl);
-        for (int j = 0; j < 7; j++)
-          push(cpu, cpu->registers[j]);
-        cpu->pc = ram_read(IV_TABLE + i);
-
-        break;
-      }
-    }
+    is_interrupt = handle_interrupt(cpu);
     if (is_interrupt) {
       is_interrupt = 0;
       continue;
@@ -132,7 +105,7 @@ void cpu_run(struct cpu *cpu) {
 
       case CALL:
         push(cpu, cpu->pc);
-        jmp_if(cpu, operand1, 1);
+        jmp(cpu, operand1);
         break;
       
       case RET:
@@ -140,7 +113,7 @@ void cpu_run(struct cpu *cpu) {
         break;
       
       case JMP:
-        jmp_if(cpu, operand1, 1);
+        jmp(cpu, operand1);
         break;
 
       case JLT:
